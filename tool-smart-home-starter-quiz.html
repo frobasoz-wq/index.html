@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Home Starter Quiz — zigbee.com.au</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dusky: #2C3E6B;
+    --dusky-light: #3D5080;
+    --dusky-dark: #1A2540;
+    --electric: #00AAFF;
+    --electric-glow: rgba(0,170,255,0.18);
+    --zigbee-red: #E8003D;
+    --router-green: #5A8A6A;
+    --device-blue: #5A7FA8;
+    --white: #F4F7FF;
+    --grey: #8A9BC0;
+    --card-bg: rgba(44,62,107,0.55);
+    --border: rgba(0,170,255,0.18);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--dusky-dark);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background mesh */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(0,170,255,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 90% 100%, rgba(232,0,61,0.07) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 50% at 50% 50%, rgba(44,62,107,0.4) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Animated dots */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(0,170,255,0.12) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none;
+    z-index: 0;
+    animation: driftDots 30s linear infinite;
+  }
+
+  @keyframes driftDots {
+    0% { transform: translate(0,0); }
+    100% { transform: translate(36px, 36px); }
+  }
+
+  .quiz-wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+  }
+
+  /* Header */
+  .quiz-header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  .quiz-brand {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--electric);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .quiz-brand::before,
+  .quiz-brand::after {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--electric);
+    opacity: 0.5;
+  }
+
+  .quiz-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--white);
+    margin-bottom: 14px;
+  }
+
+  .quiz-title span {
+    color: var(--electric);
+  }
+
+  .quiz-subtitle {
+    font-size: 16px;
+    color: var(--grey);
+    font-weight: 300;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* Progress */
+  .progress-bar-wrap {
+    margin-bottom: 36px;
+    animation: fadeDown 0.7s 0.1s ease both;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .progress-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--grey);
+  }
+
+  .progress-count {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--electric);
+  }
+
+  .progress-track {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--electric), #00DDAA);
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 12px rgba(0,170,255,0.5);
+  }
+
+  /* Question card */
+  .question-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    backdrop-filter: blur(12px);
+    animation: slideUp 0.45s cubic-bezier(0.4,0,0.2,1) both;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .question-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--electric);
+    margin-bottom: 10px;
+  }
+
+  .question-text {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(18px, 3vw, 24px);
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 28px;
+    line-height: 1.3;
+  }
+
+  /* Options grid */
+  .options-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .options-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .options-grid.cols-1 { grid-template-columns: 1fr; }
+
+  @media (max-width: 520px) {
+    .options-grid.cols-2 { grid-template-columns: 1fr; }
+  }
+
+  .option-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    text-align: left;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.35;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--electric-glow), transparent);
+    opacity: 0;
+    transition: opacity 0.22s;
+  }
+
+  .option-btn:hover {
+    border-color: var(--electric);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,170,255,0.15);
+  }
+
+  .option-btn:hover::before { opacity: 1; }
+
+  .option-btn.selected {
+    border-color: var(--electric);
+    background: rgba(0,170,255,0.12);
+    box-shadow: 0 0 0 1px var(--electric), 0 6px 24px rgba(0,170,255,0.2);
+  }
+
+  .option-btn.selected::before { opacity: 1; }
+
+  .option-emoji {
+    font-size: 22px;
+    flex-shrink: 0;
+    width: 32px;
+    text-align: center;
+  }
+
+  .option-label { flex: 1; }
+
+  .option-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.22s;
+    margin-left: auto;
+  }
+
+  .option-btn.selected .option-check {
+    background: var(--electric);
+    border-color: var(--electric);
+  }
+
+  .option-btn.selected .option-check::after {
+    content: '✓';
+    font-size: 11px;
+    color: white;
+    font-weight: 700;
+  }
+
+  /* Nav buttons */
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 28px;
+    gap: 12px;
+  }
+
+  .btn-back {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--grey);
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s;
+    padding: 10px 0;
+  }
+
+  .btn-back:hover { color: var(--white); }
+  .btn-back:disabled { opacity: 0; pointer-events: none; }
+
+  .btn-next {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--dusky-dark);
+    background: linear-gradient(135deg, var(--electric), #00CCEE);
+    border: none;
+    border-radius: 10px;
+    padding: 14px 32px;
+    cursor: pointer;
+    transition: all 0.22s;
+    box-shadow: 0 4px 20px rgba(0,170,255,0.35);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-next:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(0,170,255,0.45);
+  }
+
+  .btn-next:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Results */
+  .result-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    backdrop-filter: blur(12px);
+    animation: slideUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  .result-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,170,255,0.12);
+    border: 1px solid rgba(0,170,255,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--electric);
+    margin-bottom: 20px;
+  }
+
+  .result-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(22px, 4vw, 34px);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+
+  .result-title span { color: var(--electric); }
+
+  .result-context {
+    font-size: 14px;
+    color: var(--electric);
+    font-weight: 500;
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    background: rgba(0,170,255,0.08);
+    border-left: 3px solid var(--electric);
+    border-radius: 0 8px 8px 0;
+    line-height: 1.5;
+  }
+
+  .result-advice {
+    font-size: 15px;
+    color: rgba(244,247,255,0.88);
+    line-height: 1.75;
+    margin-bottom: 28px;
+  }
+
+  .result-advice strong {
+    color: var(--white);
+    font-weight: 500;
+  }
+
+  /* Recommended products */
+  .products-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-bottom: 14px;
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .product-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--white);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .product-chip:hover {
+    border-color: var(--electric);
+    background: rgba(0,170,255,0.08);
+    transform: translateY(-1px);
+  }
+
+  .product-chip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Next steps links */
+  .nextsteps-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--grey);
+    margin-bottom: 14px;
+  }
+
+  .nextsteps-grid {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .nextstep-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 400;
+    transition: all 0.2s;
+    line-height: 1.3;
+  }
+
+  .nextstep-link:hover {
+    border-color: var(--electric);
+    background: rgba(0,170,255,0.07);
+    transform: translateX(4px);
+  }
+
+  .nextstep-section {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--electric);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .nextstep-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    width: 28px;
+    text-align: center;
+  }
+
+  .nextstep-arrow {
+    margin-left: auto;
+    color: var(--electric);
+    opacity: 0.5;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  /* Restart */
+  .btn-restart {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--grey);
+    background: none;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    text-align: center;
+  }
+
+  .btn-restart:hover {
+    border-color: var(--grey);
+    color: var(--white);
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+    margin: 24px 0;
+  }
+
+  /* Footer note */
+  .quiz-footer {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 12px;
+    color: var(--grey);
+    opacity: 0.7;
+    animation: fadeDown 0.7s 0.3s ease both;
+  }
+
+  .quiz-footer a { color: var(--electric); text-decoration: none; }
+
+  @media (max-width: 600px) {
+    .question-card, .result-card { padding: 24px 20px; }
+    .quiz-wrapper { padding: 24px 14px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="quiz-wrapper">
+
+  <div class="quiz-header">
+    <div class="quiz-brand">zigbee.com.au</div>
+    <h1 class="quiz-title">Smart Home<br><span>Starter Quiz</span></h1>
+    <p class="quiz-subtitle">Answer 5 quick questions and we'll show you exactly where to start — no jargon, no overwhelm.</p>
+  </div>
+
+  <div class="progress-bar-wrap" id="progressWrap">
+    <div class="progress-meta">
+      <span class="progress-label">Your Progress</span>
+      <span class="progress-count" id="progressCount">Question 1 of 5</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div id="quizArea"></div>
+
+  <div class="quiz-footer">
+    Built for beginners by <a href="https://zigbee.com.au">zigbee.com.au</a> &mdash; Australia's Zigbee smart home guide.
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    id: 'goal',
+    text: 'What\'s your main reason for getting into smart home?',
+    cols: 2,
+    options: [
+      { emoji: '🔒', label: 'Security & sensors', value: 'security' },
+      { emoji: '💡', label: 'Lighting & ambience', value: 'lighting' },
+      { emoji: '🔌', label: 'Save energy & monitor power', value: 'energy' },
+      { emoji: '🌡️', label: 'Control heating & cooling', value: 'climate' },
+      { emoji: '🏠', label: 'Full smart home setup', value: 'full' },
+      { emoji: '🤷', label: 'Just exploring for now', value: 'explore' },
+    ]
+  },
+  {
+    id: 'tenure',
+    text: 'Do you own your home or rent?',
+    cols: 1,
+    options: [
+      { emoji: '🏠', label: 'I own my home', value: 'own' },
+      { emoji: '🔑', label: 'I rent', value: 'rent' },
+      { emoji: '🛒', label: 'I\'m buying soon', value: 'buying' },
+    ]
+  },
+  {
+    id: 'size',
+    text: 'How big is your home?',
+    cols: 2,
+    options: [
+      { emoji: '🏢', label: 'Apartment', value: 'apartment' },
+      { emoji: '🏡', label: 'Small house (1–2 bed)', value: 'small' },
+      { emoji: '🏘️', label: 'Medium house (3–4 bed)', value: 'medium' },
+      { emoji: '🏰', label: 'Large house (5+ bed)', value: 'large' },
+    ]
+  },
+  {
+    id: 'tech',
+    text: 'How would you describe your tech confidence?',
+    cols: 1,
+    options: [
+      { emoji: '😊', label: 'Total beginner — keep it simple!', value: 'beginner' },
+      { emoji: '📖', label: 'I can follow instructions', value: 'mid' },
+      { emoji: '🔧', label: 'I love tinkering & customising', value: 'tinkerer' },
+    ]
+  },
+  {
+    id: 'budget',
+    text: 'What\'s your starter budget?',
+    cols: 2,
+    options: [
+      { emoji: '💰', label: 'Under $100', value: 'low' },
+      { emoji: '💰💰', label: '$100 – $300', value: 'mid' },
+      { emoji: '💰💰💰', label: '$300 – $600', value: 'high' },
+      { emoji: '💰💰💰💰', label: '$600+', value: 'top' },
+    ]
+  }
+];
+
+const answers = {};
+let current = 0;
+
+// --- ADVICE ENGINE ---
+function getContextNote(a) {
+  const notes = [];
+  if (a.tenure === 'rent') notes.push('As a renter, focus on plug-in and adhesive-mount devices — no drilling, no landlord dramas.');
+  else if (a.tenure === 'buying') notes.push('Since you\'re buying soon, start small now and plan your full setup once you\'re in.');
+  if (a.size === 'large') notes.push('With a large home you\'ll need to plan your mesh carefully — routers every 10–12m to keep signals strong.');
+  else if (a.size === 'apartment') notes.push('Good news: an apartment is the ideal size for a single hub with no repeaters needed to start.');
+  if (a.budget === 'low') notes.push('With a sub-$100 budget, pick one hub and one or two devices — learn the system before expanding.');
+  else if (a.budget === 'top') notes.push('With a generous budget, invest in quality hardware and plan your network properly from day one.');
+  return notes.join(' ');
+}
+
+const advice = {
+  security: {
+    beginner: {
+      title: 'Security Starter',
+      emoji: '🔒',
+      body: `Start simple — one hub, one door sensor, one motion sensor. The <strong>Philips Hue Bridge</strong> or <strong>Amazon Echo (4th gen+)</strong> are the easiest entry points. Both have apps that walk you through setup. Buy an <strong>Aqara Door & Window Sensor</strong> and an <strong>Aqara Motion Sensor</strong> to start — they pair instantly and just work. Don't overbuy. Learn how one device behaves before adding more.`,
+      products: [
+        { name: 'Philips Hue Bridge', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Amazon Echo 4th Gen', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Aqara Door Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Aqara Motion Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+      ],
+      links: [
+        { section: 'Learn', icon: '📚', text: 'What is Zigbee? A beginner\'s guide', url: 'https://zigbee.com.au/learn/what-is-zigbee' },
+        { section: 'Plan', icon: '🗺️', text: 'Where to place sensors for maximum coverage', url: 'https://zigbee.com.au/plan/sensor-placement' },
+        { section: 'Build', icon: '🔨', text: '6 steps to build your first Zigbee network', url: 'https://zigbee.com.au/build/6-steps' },
+      ]
+    },
+    mid: {
+      title: 'Security Starter',
+      emoji: '🔒',
+      body: `The <strong>Aqara Hub M2</strong> is your best starting point. It runs locally (no cloud required), supports Apple Home, Alexa and Google, and Aqara make the widest range of security sensors available — door, motion, water leak, vibration and presence. Buy the hub, two door sensors and a motion sensor as your foundation. Check our <strong>Plan</strong> section for sensor placement guidance to get maximum coverage.`,
+      products: [
+        { name: 'Aqara Hub M2', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Aqara Door Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Aqara Motion Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Aqara Water Leak', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+      ],
+      links: [
+        { section: 'Plan', icon: '🗺️', text: 'How to map and plan your Zigbee network', url: 'https://zigbee.com.au/plan/network-map' },
+        { section: 'Plan', icon: '📍', text: 'Where to place sensors for maximum coverage', url: 'https://zigbee.com.au/plan/sensor-placement' },
+        { section: 'Build', icon: '🔨', text: 'Installation guide: sensors', url: 'https://zigbee.com.au/build/sensors' },
+      ]
+    },
+    tinkerer: {
+      title: 'Security Power User',
+      emoji: '🔒',
+      body: `Use a <strong>Sonoff ZBDongle-E</strong> with <strong>Zigbee2MQTT</strong> running on Home Assistant. This gives you full local control, no manufacturer cloud, and supports virtually every Zigbee sensor on the market. For sensors, the <strong>Sonoff SNZB</strong> range offers excellent value and wide compatibility. Pair with <strong>Aqara sensors</strong> for a premium feel. Make sure every device you buy carries the <strong>Zigbee 3.0 logo</strong> — this prevents the common "pairs but doesn't work properly" problem across brands.`,
+      products: [
+        { name: 'Sonoff ZBDongle-E', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Sonoff SNZB-03 Motion', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Sonoff SNZB-04 Door', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Aqara Presence Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+      ],
+      links: [
+        { section: 'Learn', icon: '📚', text: 'Zigbee 3.0 explained — why it matters', url: 'https://zigbee.com.au/learn/zigbee-3' },
+        { section: 'Plan', icon: '📡', text: 'Choosing the best Zigbee channel', url: 'https://zigbee.com.au/plan/zigbee-channel' },
+        { section: 'Build', icon: '🔨', text: 'Setting up Zigbee2MQTT with Home Assistant', url: 'https://zigbee.com.au/build/zigbee2mqtt' },
+      ]
+    }
+  },
+  lighting: {
+    beginner: {
+      title: 'Lighting Starter',
+      emoji: '💡',
+      body: `<strong>Philips Hue</strong> is the gold standard for beginners — the starter kit includes the bridge and two bulbs and you'll be up and running in 15 minutes. Yes, it's more expensive than alternatives, but the app is excellent and the ecosystem is huge. Once you're comfortable, you can add bulbs from <strong>IKEA TRÅDFRI</strong> or <strong>Innr</strong> to save money — they're fully Hue-compatible. Avoid <strong>Sengled bulbs</strong> as a starting point — they don't act as mesh routers, which matters as your network grows.`,
+      products: [
+        { name: 'Philips Hue Starter Kit', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'IKEA TRÅDFRI Bulb', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+        { name: 'Innr Smart Bulb', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+      ],
+      links: [
+        { section: 'Learn', icon: '📚', text: 'What is Zigbee? A beginner\'s guide', url: 'https://zigbee.com.au/learn/what-is-zigbee' },
+        { section: 'Learn', icon: '🕸️', text: 'How Zigbee mesh networks work', url: 'https://zigbee.com.au/learn/mesh-networks' },
+        { section: 'Build', icon: '🔨', text: 'Installation guide: smart lighting', url: 'https://zigbee.com.au/build/lighting' },
+      ]
+    },
+    mid: {
+      title: 'Lighting Enthusiast',
+      emoji: '💡',
+      body: `Consider the <strong>IKEA Dirigera hub</strong> with TRÅDFRI bulbs as a budget-friendly alternative to Hue — widely available, solid app, and a good range. If you want more flexibility, the <strong>Aqara Hub M2</strong> works with bulbs from multiple brands and runs locally. Key tip: choose bulbs with the <strong>Zigbee 3.0 logo</strong> so you can mix brands freely without pairing headaches. Read our guide on device placement — lighting placement affects your whole mesh network, not just ambience.`,
+      products: [
+        { name: 'IKEA Dirigera Hub', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'IKEA TRÅDFRI Bulbs', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+        { name: 'Aqara Hub M2', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Innr Smart Bulb', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+      ],
+      links: [
+        { section: 'Plan', icon: '📍', text: 'Where to place Zigbee devices', url: 'https://zigbee.com.au/plan/device-placement' },
+        { section: 'Plan', icon: '🕸️', text: 'How to map and plan your network', url: 'https://zigbee.com.au/plan/network-map' },
+        { section: 'Build', icon: '🔨', text: 'Installation guide: smart lighting', url: 'https://zigbee.com.au/build/lighting' },
+      ]
+    },
+    tinkerer: {
+      title: 'Lighting Power User',
+      emoji: '💡',
+      body: `Skip manufacturer ecosystems entirely. A <strong>Sonoff ZBDongle-E</strong> with <strong>Zigbee2MQTT</strong> and <strong>Home Assistant</strong> gives you scene control, circadian rhythm lighting, and full automation that no commercial hub can match. Use <strong>Innr</strong> or <strong>IKEA TRÅDFRI</strong> bulbs for value, or <strong>Philips Hue bulbs</strong> (without the Hue bridge) for premium quality — they work perfectly with Zigbee2MQTT. Important: bulbs are poor mesh routers — always add dedicated <strong>smart plugs as routers</strong> to strengthen your network before adding more than 10 bulbs.`,
+      products: [
+        { name: 'Sonoff ZBDongle-E', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Philips Hue Bulbs', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+        { name: 'IKEA TRÅDFRI Plug', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+        { name: 'Home Assistant Green', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+      ],
+      links: [
+        { section: 'Plan', icon: '🕸️', text: 'Mesh network design for larger homes', url: 'https://zigbee.com.au/plan/mesh-design' },
+        { section: 'Build', icon: '🔨', text: 'Setting up Zigbee2MQTT with Home Assistant', url: 'https://zigbee.com.au/build/zigbee2mqtt' },
+        { section: 'Create', icon: '⚡', text: 'Circadian rhythm lighting automations', url: 'https://zigbee.com.au/create/circadian' },
+      ]
+    }
+  },
+  energy: {
+    beginner: {
+      title: 'Energy Saver Starter',
+      emoji: '🔌',
+      body: `Start with <strong>smart plugs with power monitoring</strong> — plug them into your biggest energy users (heater, TV, washing machine) and you'll immediately see what's costing you money. The <strong>Sonoff S40 Lite Zigbee</strong> plug is affordable and works with Amazon Echo (4th gen+) out of the box. No additional hub needed to get started. Once you see the data, you'll know exactly where to focus next.`,
+      products: [
+        { name: 'Amazon Echo 4th Gen', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Sonoff S40 Lite Zigbee', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+        { name: 'Nous Smart Plug', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+      ],
+      links: [
+        { section: 'Learn', icon: '📚', text: 'What is Zigbee? A beginner\'s guide', url: 'https://zigbee.com.au/learn/what-is-zigbee' },
+        { section: 'Build', icon: '🔨', text: 'Installation guide: smart plugs', url: 'https://zigbee.com.au/build/plugs' },
+        { section: 'Products', icon: '🛍️', text: 'Best Zigbee smart plugs with power monitoring', url: 'https://zigbee.com.au/products/smart-plugs' },
+      ]
+    },
+    mid: {
+      title: 'Energy Monitor',
+      emoji: '🔌',
+      body: `The <strong>Aqara Hub M2</strong> paired with <strong>Aqara Smart Plugs</strong> gives you per-device energy monitoring with a clean dashboard. For a broader picture of your home's energy use, add an <strong>Aqara TVOC & environment sensor</strong> to monitor air quality alongside power. If you want to monitor your whole home rather than individual devices, our <strong>Plan</strong> section covers whole-home energy monitoring strategy in detail.`,
+      products: [
+        { name: 'Aqara Hub M2', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Aqara Smart Plug', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+        { name: 'Aqara TVOC Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Sonoff S40 Lite', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+      ],
+      links: [
+        { section: 'Plan', icon: '🗺️', text: 'How to map and plan your Zigbee network', url: 'https://zigbee.com.au/plan/network-map' },
+        { section: 'Build', icon: '🔨', text: 'Installation guide: smart plugs', url: 'https://zigbee.com.au/build/plugs' },
+        { section: 'Products', icon: '🛍️', text: 'Best energy monitoring devices', url: 'https://zigbee.com.au/products/energy' },
+      ]
+    },
+    tinkerer: {
+      title: 'Energy Power User',
+      emoji: '🔌',
+      body: `<strong>Home Assistant</strong> with a <strong>Sonoff ZBDongle-E</strong> is the only platform that gives you true whole-home energy dashboards. Use <strong>Sonoff ZBMINIL2</strong> for in-wall switching with monitoring, <strong>NOUS smart plugs</strong> for individual device tracking, and connect your solar inverter or electricity meter via a separate integration. The <strong>Energy Dashboard</strong> in Home Assistant is genuinely powerful — but read our network planning guide first. A solid mesh is essential before adding power monitoring devices throughout the house.`,
+      products: [
+        { name: 'Sonoff ZBDongle-E', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Home Assistant Green', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Sonoff ZBMINIL2', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+        { name: 'Nous Smart Plug', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+      ],
+      links: [
+        { section: 'Plan', icon: '🕸️', text: 'Mesh network design — plan before you buy', url: 'https://zigbee.com.au/plan/mesh-design' },
+        { section: 'Build', icon: '🔨', text: 'Setting up Zigbee2MQTT with Home Assistant', url: 'https://zigbee.com.au/build/zigbee2mqtt' },
+        { section: 'Create', icon: '⚡', text: 'Energy automations in Home Assistant', url: 'https://zigbee.com.au/create/energy' },
+      ]
+    }
+  },
+  climate: {
+    beginner: {
+      title: 'Climate Control Starter',
+      emoji: '🌡️',
+      body: `Start with a <strong>temperature and humidity sensor</strong> in your main living area — the <strong>Sonoff SNZB-02</strong> is cheap, accurate, and pairs easily with an Amazon Echo. This tells you what's actually happening in your home before you automate anything. Then add a <strong>smart plug</strong> on your fan or portable heater to control it based on temperature. Simple, effective, no rewiring needed.`,
+      products: [
+        { name: 'Amazon Echo 4th Gen', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Sonoff SNZB-02 Temp', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Sonoff S40 Lite Plug', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+      ],
+      links: [
+        { section: 'Learn', icon: '📚', text: 'What is Zigbee? A beginner\'s guide', url: 'https://zigbee.com.au/learn/what-is-zigbee' },
+        { section: 'Build', icon: '🔨', text: 'Installation guide: sensors', url: 'https://zigbee.com.au/build/sensors' },
+        { section: 'Products', icon: '🛍️', text: 'Best Zigbee temperature sensors', url: 'https://zigbee.com.au/products/sensors' },
+      ]
+    },
+    mid: {
+      title: 'Climate Controller',
+      emoji: '🌡️',
+      body: `The <strong>Aqara Hub M2</strong> with <strong>Aqara temperature sensors</strong> gives you room-by-room climate visibility. If you have a ducted system or split system, an <strong>Aqara IR Controller</strong> can automate it without any rewiring. For renters this is ideal — everything is plug-in or adhesive mount, nothing permanent. Our <strong>Build</strong> guides cover climate automation step by step.`,
+      products: [
+        { name: 'Aqara Hub M2', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Aqara Temp Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Aqara IR Controller', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+        { name: 'Sonoff SNZB-02', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+      ],
+      links: [
+        { section: 'Build', icon: '🔨', text: 'Climate automation guide', url: 'https://zigbee.com.au/build/climate' },
+        { section: 'Plan', icon: '📍', text: 'Where to place sensors in your home', url: 'https://zigbee.com.au/plan/device-placement' },
+        { section: 'Create', icon: '⚡', text: 'Temperature-based automations', url: 'https://zigbee.com.au/create/climate' },
+      ]
+    },
+    tinkerer: {
+      title: 'Climate Power User',
+      emoji: '🌡️',
+      body: `<strong>Home Assistant</strong> with <strong>Zigbee2MQTT</strong> lets you build proper climate control — temperature-triggered automations, presence-based heating, and integration with most ducted systems via a separate climate integration. Use <strong>Aqara or Sonoff SNZB temperature sensors</strong> throughout the house for room-by-room data. If you have a heat pump or ducted system, research your specific brand's Home Assistant integration before buying — compatibility varies significantly between brands.`,
+      products: [
+        { name: 'Sonoff ZBDongle-E', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Home Assistant Green', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Aqara Temp Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Sonoff SNZB-02', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+      ],
+      links: [
+        { section: 'Plan', icon: '🕸️', text: 'Mesh network design — plan before you buy', url: 'https://zigbee.com.au/plan/mesh-design' },
+        { section: 'Build', icon: '🔨', text: 'Setting up Zigbee2MQTT with Home Assistant', url: 'https://zigbee.com.au/build/zigbee2mqtt' },
+        { section: 'Create', icon: '⚡', text: 'Presence-based climate automations', url: 'https://zigbee.com.au/create/presence' },
+      ]
+    }
+  },
+  full: {
+    beginner: {
+      title: 'Full Home Builder',
+      emoji: '🏠',
+      body: `A full smart home is built in stages — don't try to do it all at once. Start with <strong>one hub, one room, one use case</strong>. The <strong>Amazon Echo (4th gen+)</strong> or <strong>Philips Hue Bridge</strong> are the best starting hubs because they're forgiving and well documented. Pick your most-used room, add lighting and one sensor, and live with it for a month. Our <strong>6-step Build guide</strong> is written exactly for this journey — follow it before buying anything else.`,
+      products: [
+        { name: 'Amazon Echo 4th Gen', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Philips Hue Bridge', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Aqara Motion Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Sonoff SNZB-04 Door', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+      ],
+      links: [
+        { section: 'Learn', icon: '📚', text: 'What is Zigbee? Start here', url: 'https://zigbee.com.au/learn/what-is-zigbee' },
+        { section: 'Plan', icon: '🗺️', text: 'How to plan your Zigbee network', url: 'https://zigbee.com.au/plan/network-map' },
+        { section: 'Build', icon: '🔨', text: '6 steps to build your first Zigbee network', url: 'https://zigbee.com.au/build/6-steps' },
+      ]
+    },
+    mid: {
+      title: 'Full Home Builder',
+      emoji: '🏠',
+      body: `Plan before you buy — this is the most important advice for a full home setup. Our <strong>Network Planning guide</strong> will help you map your home and work out how many router devices you need. The <strong>Aqara Hub M2</strong> or <strong>Sonoff iHost</strong> are strong mid-tier choices — both run locally, support multiple device brands, and have good apps. Budget tip: <strong>IKEA TRÅDFRI smart plugs</strong> double as Zigbee mesh routers — place them strategically and they strengthen your network while giving you smart outlets.`,
+      products: [
+        { name: 'Aqara Hub M2', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Sonoff iHost', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'IKEA TRÅDFRI Plug', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+        { name: 'Aqara Motion Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+      ],
+      links: [
+        { section: 'Plan', icon: '🗺️', text: 'How to map and plan your Zigbee network', url: 'https://zigbee.com.au/plan/network-map' },
+        { section: 'Plan', icon: '📍', text: 'Where to place devices for best coverage', url: 'https://zigbee.com.au/plan/device-placement' },
+        { section: 'Build', icon: '🔨', text: '6 steps to build your Zigbee network', url: 'https://zigbee.com.au/build/6-steps' },
+        { section: 'Products', icon: '🛍️', text: 'Best Zigbee devices by category', url: 'https://zigbee.com.au/products' },
+      ]
+    },
+    tinkerer: {
+      title: 'Full Home Power User',
+      emoji: '🏠',
+      body: `This is where <strong>Home Assistant</strong> truly shines. Use a <strong>Home Assistant Green</strong> (easiest setup) or a <strong>Raspberry Pi 4 with Sonoff ZBDongle-E</strong> for full control. Plan your mesh carefully — read our <strong>Zigbee channel guide</strong> and <strong>network planning articles</strong> before pairing a single device. Use <strong>Zigbee2MQTT</strong> for maximum device compatibility. Structure your build around the <strong>6-step process</strong> in our Build section — even experienced tinkerers benefit from a planned approach over an organic one.`,
+      products: [
+        { name: 'Home Assistant Green', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Sonoff ZBDongle-E', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Home Assistant Yellow', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+        { name: 'IKEA TRÅDFRI Plug', url: 'https://amzn.to/placeholder', color: '#5A8A6A' },
+      ],
+      links: [
+        { section: 'Plan', icon: '📡', text: 'Choosing the best Zigbee channel', url: 'https://zigbee.com.au/plan/zigbee-channel' },
+        { section: 'Plan', icon: '🕸️', text: 'Mesh network design for larger homes', url: 'https://zigbee.com.au/plan/mesh-design' },
+        { section: 'Build', icon: '🔨', text: 'Setting up Zigbee2MQTT with Home Assistant', url: 'https://zigbee.com.au/build/zigbee2mqtt' },
+        { section: 'Create', icon: '⚡', text: 'Getting started with automations', url: 'https://zigbee.com.au/create' },
+      ]
+    }
+  },
+  explore: {
+    beginner: {
+      title: 'Curious Explorer',
+      emoji: '🤷',
+      body: `Perfect place to start. Zigbee is a wireless protocol that lets your smart home devices talk to each other without relying on WiFi. Read our <strong>What is Zigbee?</strong> article first — it explains everything in plain English. When you're ready to try something, the cheapest useful starting point is an <strong>Amazon Echo (4th gen+)</strong> (you may already own one) plus a single <strong>Sonoff SNZB motion sensor</strong> (~$15). That's a working Zigbee network for under $100.`,
+      products: [
+        { name: 'Amazon Echo 4th Gen', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Sonoff SNZB-03 Motion', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+      ],
+      links: [
+        { section: 'Learn', icon: '📚', text: 'What is Zigbee? Start here', url: 'https://zigbee.com.au/learn/what-is-zigbee' },
+        { section: 'Learn', icon: '🕸️', text: 'How Zigbee mesh networks work', url: 'https://zigbee.com.au/learn/mesh-networks' },
+        { section: 'Products', icon: '🛍️', text: 'Best beginner Zigbee starter kits', url: 'https://zigbee.com.au/products/starter-kits' },
+      ]
+    },
+    mid: {
+      title: 'Curious Explorer',
+      emoji: '🤷',
+      body: `Start with our <strong>Learn</strong> section — specifically <strong>What is Zigbee?</strong> and <strong>How mesh networks work</strong>. These two articles will give you a clear mental model before spending any money. When you're ready, the <strong>Aqara Hub M2 starter kit</strong> is a great first purchase — it comes with a hub and sensors, everything pairs first try, and it works with Apple Home, Alexa and Google.`,
+      products: [
+        { name: 'Aqara Hub M2', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Aqara Door Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+        { name: 'Aqara Motion Sensor', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+      ],
+      links: [
+        { section: 'Learn', icon: '📚', text: 'What is Zigbee? Start here', url: 'https://zigbee.com.au/learn/what-is-zigbee' },
+        { section: 'Learn', icon: '🕸️', text: 'How Zigbee mesh networks work', url: 'https://zigbee.com.au/learn/mesh-networks' },
+        { section: 'Learn', icon: '📡', text: 'Zigbee 3.0 — what it means for you', url: 'https://zigbee.com.au/learn/zigbee-3' },
+      ]
+    },
+    tinkerer: {
+      title: 'Curious Tinkerer',
+      emoji: '🤷',
+      body: `If you're technically minded, go straight to our <strong>Learn</strong> section and read about <strong>Zigbee 3.0</strong> and <strong>mesh network design</strong>. Then visit the <strong>Home Assistant</strong> and <strong>Zigbee2MQTT</strong> documentation — the community around these platforms is enormous and the capability ceiling is very high. When you're ready to buy hardware, come back to our <strong>Plan</strong> section first — a well-planned network is the difference between a smart home that delights and one that frustrates.`,
+      products: [
+        { name: 'Sonoff ZBDongle-E', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Home Assistant Green', url: 'https://amzn.to/placeholder', color: '#E8003D' },
+        { name: 'Sonoff SNZB-03 Motion', url: 'https://amzn.to/placeholder', color: '#5A7FA8' },
+      ],
+      links: [
+        { section: 'Learn', icon: '📚', text: 'Zigbee 3.0 explained', url: 'https://zigbee.com.au/learn/zigbee-3' },
+        { section: 'Learn', icon: '🕸️', text: 'How mesh networks work', url: 'https://zigbee.com.au/learn/mesh-networks' },
+        { section: 'Plan', icon: '🗺️', text: 'How to plan your Zigbee network', url: 'https://zigbee.com.au/plan/network-map' },
+      ]
+    }
+  }
+};
+
+// --- RENDER ---
+function renderQuestion(idx) {
+  const q = questions[idx];
+  const pct = (idx / questions.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressCount').textContent = `Question ${idx+1} of ${questions.length}`;
+
+  const area = document.getElementById('quizArea');
+  area.innerHTML = `
+    <div class="question-card">
+      <div class="question-number">Question ${idx+1} of ${questions.length}</div>
+      <div class="question-text">${q.text}</div>
+      <div class="options-grid cols-${q.cols}" id="optionsGrid">
+        ${q.options.map(opt => `
+          <button class="option-btn${answers[q.id] === opt.value ? ' selected' : ''}" data-value="${opt.value}" onclick="selectOption('${q.id}','${opt.value}')">
+            <span class="option-emoji">${opt.emoji}</span>
+            <span class="option-label">${opt.label}</span>
+            <span class="option-check"></span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="nav-row">
+        <button class="btn-back" onclick="goBack()" ${idx === 0 ? 'disabled' : ''}>← Back</button>
+        <button class="btn-next" id="btnNext" onclick="goNext()" ${answers[q.id] ? '' : 'disabled'}>
+          ${idx === questions.length - 1 ? 'See My Results →' : 'Next →'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function selectOption(qid, value) {
+  answers[qid] = value;
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.value === value);
+  });
+  document.getElementById('btnNext').disabled = false;
+}
+
+function goNext() {
+  if (current < questions.length - 1) {
+    current++;
+    renderQuestion(current);
+  } else {
+    showResult();
+  }
+}
+
+function goBack() {
+  if (current > 0) { current--; renderQuestion(current); }
+}
+
+function showResult() {
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressCount').textContent = 'Your Results';
+  document.getElementById('progressWrap').querySelector('.progress-label').textContent = 'Complete!';
+
+  const goal = answers.goal;
+  const tech = answers.tech;
+  const result = advice[goal][tech];
+  const contextNote = getContextNote(answers);
+
+  const area = document.getElementById('quizArea');
+  area.innerHTML = `
+    <div class="result-card">
+      <div class="result-badge">${result.emoji} Your Smart Home Profile</div>
+      <h2 class="result-title">You're a <span>${result.title}</span></h2>
+      ${contextNote ? `<div class="result-context">💡 ${contextNote}</div>` : ''}
+      <p class="result-advice">${result.body}</p>
+
+      <div class="divider"></div>
+
+      <div class="products-title">Recommended Devices to Start With</div>
+      <div class="products-grid">
+        ${result.products.map(p => `
+          <a class="product-chip" href="${p.url}" target="_blank" rel="noopener">
+            <span class="product-chip-dot" style="background:${p.color}"></span>
+            ${p.name}
+          </a>
+        `).join('')}
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="nextsteps-title">Your Next Steps on zigbee.com.au</div>
+      <div class="nextsteps-grid">
+        ${result.links.map(l => `
+          <a class="nextstep-link" href="${l.url}" target="_blank" rel="noopener">
+            <span class="nextstep-icon">${l.icon}</span>
+            <span>
+              <span class="nextstep-section">${l.section}</span>
+              ${l.text}
+            </span>
+            <span class="nextstep-arrow">→</span>
+          </a>
+        `).join('')}
+      </div>
+
+      <div class="divider"></div>
+      <button class="btn-restart" onclick="restartQuiz()">↺ Start Over</button>
+    </div>
+  `;
+}
+
+function restartQuiz() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  current = 0;
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressWrap').querySelector('.progress-label').textContent = 'Your Progress';
+  renderQuestion(0);
+}
+
+// Init
+renderQuestion(0);
+</script>
+</body>
+</html>
